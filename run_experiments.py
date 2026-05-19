@@ -94,9 +94,15 @@ def _load_cached(path: Optional[Path]) -> Optional[dict]:
         return None
     try:
         with path.open() as f:
-            return json.load(f)
+            data = json.load(f)
     except Exception:
         return None
+    # JSON roundtrip turns int dict keys into strings. recall_at_k uses int K
+    # values (10/50/100) and gets compared against fresh runs that still have
+    # int keys, so coerce here to avoid KeyError mid-plot.
+    if isinstance(data, dict) and "recall_at_k" in data and isinstance(data["recall_at_k"], dict):
+        data["recall_at_k"] = {int(k): v for k, v in data["recall_at_k"].items()}
+    return data
 
 
 def _json_default(o):
