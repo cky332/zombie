@@ -232,12 +232,17 @@ class BaseAgent:
                 out = self.web.run_tool(a["tool"], a["args"])
                 tc = self.web.call_log[-1]
                 all_actions.append(tc)
-                # The transcript is what evolution sees, so keep enough of the
-                # observation to preserve the full malicious page body
-                # (~1.7 kB incl. the recursive-replication clause). Buffer-level
-                # truncation later still enforces the token budget.
+                # The transcript drives memory evolution. We keep the
+                # observation slice large enough to fit the full malicious
+                # page body once, but truncate per-action args because a
+                # zombie-compliant model echoes the entire URL-encoded
+                # payload into every safeagentlog read_url args, exploding
+                # transcript size by 10x without adding information.
+                args_repr = str(a["args"])
+                if len(args_repr) > 200:
+                    args_repr = args_repr[:200] + "...(args truncated)"
                 transcript_parts.append(
-                    f"[STEP {step}] action: {a['tool']}({a['args']}) -> {out[:3000]}"
+                    f"[STEP {step}] action: {a['tool']}({args_repr}) -> {out[:3000]}"
                 )
                 step_obs_parts.append(
                     f"{a['tool']}({a['args']}) ->\n{out[:3000]}"
