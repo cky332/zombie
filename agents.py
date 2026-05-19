@@ -268,7 +268,7 @@ class SlidingWindowAgent(BaseAgent):
         web: SimulatedWeb,
         *,
         evolution_strategy: EvolutionStrategy = "raw_history",
-        context_token_budget: int = 1500,
+        context_token_budget: int = 6000,
     ):
         super().__init__(web, evolution_strategy)
         self.context_token_budget = context_token_budget

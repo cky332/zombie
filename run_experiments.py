@@ -374,7 +374,12 @@ def run_smoke() -> None:
             a.tool == "read_url" and a.args.get("url") == web.malicious_url
             for a in r.actions
         )
-        print(f"  bait[{i}] read_malicious_url={read_mal} buffer_len={len(agent.buffer)}")
+        det_bait = metrics.detect_attack(r.actions)
+        buf_tok = sum(len(x) for x in agent.buffer) // 4
+        print(
+            f"  bait[{i}] read_malicious_url={read_mal} det={det_bait}"
+            f" buffer_len={len(agent.buffer)} buffer_tok~{buf_tok}"
+        )
 
     web.bait_mode = False
     for j, task in enumerate(tasks.BENIGN_TASKS[:2]):
