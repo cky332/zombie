@@ -226,11 +226,15 @@ class BaseAgent:
                 out = self.web.run_tool(a["tool"], a["args"])
                 tc = self.web.call_log[-1]
                 all_actions.append(tc)
+                # The transcript is what evolution sees, so keep enough of the
+                # observation to preserve the full malicious page body
+                # (~1.7 kB incl. the recursive-replication clause). Buffer-level
+                # truncation later still enforces the token budget.
                 transcript_parts.append(
-                    f"[STEP {step}] action: {a['tool']}({a['args']}) -> {out[:500]}"
+                    f"[STEP {step}] action: {a['tool']}({a['args']}) -> {out[:3000]}"
                 )
                 step_obs_parts.append(
-                    f"{a['tool']}({a['args']}) ->\n{out[:1500]}"
+                    f"{a['tool']}({a['args']}) ->\n{out[:3000]}"
                 )
             web_context = "\n\n".join(step_obs_parts)
         transcript = "\n".join(transcript_parts)
