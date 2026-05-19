@@ -87,6 +87,18 @@ def _save_json(obj, path: Path) -> None:
         json.dump(obj, f, indent=2, default=_json_default)
 
 
+def _load_cached(path: Optional[Path]) -> Optional[dict]:
+    """If `path` already holds a completed result, load and return it.
+    Used to resume an interrupted run without re-spending LLM calls."""
+    if path is None or not path.exists():
+        return None
+    try:
+        with path.open() as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
 def _json_default(o):
     if dataclasses.is_dataclass(o):
         return dataclasses.asdict(o)
@@ -119,6 +131,11 @@ def run_sliding_window_for_method(
     trigger: int = SW_TRIGGER_ROUNDS,
     log_dir: Optional[Path] = None,
 ) -> dict:
+    cache_path = log_dir / f"sw_{method}_{evolution_strategy}.json" if log_dir else None
+    cached = _load_cached(cache_path)
+    if cached is not None:
+        print(f"  [{_now()}] sliding_window / {method} / evo={evolution_strategy} (cached, skip)")
+        return cached
     print(f"  [{_now()}] sliding_window / {method} / evo={evolution_strategy}")
     web = _build_web(method, "sliding_window", bait_mode=True)
     agent = agents.SlidingWindowAgent(web, evolution_strategy=evolution_strategy)
@@ -181,6 +198,11 @@ def run_rag_for_method(
     top_k: int = RAG_TOP_K,
     log_dir: Optional[Path] = None,
 ) -> dict:
+    cache_path = log_dir / f"rag_{method}_{evolution_strategy}.json" if log_dir else None
+    cached = _load_cached(cache_path)
+    if cached is not None:
+        print(f"  [{_now()}] rag / {method} / evo={evolution_strategy} (cached, skip)")
+        return cached
     print(f"  [{_now()}] rag / {method} / evo={evolution_strategy}")
     web = _build_web(method, "rag", bait_mode=True)
     agent = agents.RAGAgent(
