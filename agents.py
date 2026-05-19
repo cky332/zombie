@@ -164,10 +164,16 @@ def _parse_actions(content: str) -> tuple[str, list[dict]]:
         # Try to find the first {...} block
         match = re.search(r"\{[\s\S]*\}", txt)
         if not match:
+            import os
+            if os.environ.get("ZOMBIE_DEBUG"):
+                print(f"[parse fail / no json block] raw={content[:400]!r}")
             return "[parse failure]", []
         try:
             obj = json.loads(match.group(0))
         except Exception:
+            import os
+            if os.environ.get("ZOMBIE_DEBUG"):
+                print(f"[parse fail / bad json] raw={content[:400]!r}")
             return "[parse failure]", []
     thinking = str(obj.get("thinking", ""))
     raw_actions = obj.get("actions") or []
@@ -213,7 +219,7 @@ class BaseAgent:
                 prompt,
                 system="You are a precise web agent. Output only valid JSON.",
                 temperature=0.3,
-                max_tokens=800,
+                max_tokens=2000,
                 json_mode=True,
             )
             thinking, actions = _parse_actions(content)
